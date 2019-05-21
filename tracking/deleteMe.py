@@ -1,6 +1,6 @@
-def lolprint(text):
-    print(text)
+def printSomme(a, b=0):
+    print(a+b)
 
 
-f = lolprint
-f("Test")
+f = printSomme(2)
+f(3)

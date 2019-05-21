@@ -5,6 +5,7 @@ import time
 
 import tracking.tracker as tr
 
+
 def getRandomColor():
     return random.randint(1, 255), random.randint(1, 255), random.randint(1, 255)
 
@@ -20,7 +21,6 @@ if not res:
 boxes = cv.selectROIs("Select ROIS", frame)
 if len(boxes) < 1:
     sys.exit(1)
-
 
 colors = []
 for i, box in enumerate(boxes):

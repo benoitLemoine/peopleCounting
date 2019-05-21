@@ -81,7 +81,7 @@ def computeIoU(box1, box2):
     return intersection / union
 
 
-def findMaxIoUTracker(trackers, detectedBox):
+def findMaxIoUTracker(trackers, detectedBox, iouFloor):
     maxTracker = None
     maxValue = 0
 
@@ -92,7 +92,10 @@ def findMaxIoUTracker(trackers, detectedBox):
                 maxTracker = t
                 maxValue = value
 
-    return maxTracker, maxValue
+    if maxValue > iouFloor:
+        return maxTracker, maxValue
+    else:
+        return None, None
 
 
 class Tracker:
@@ -113,14 +116,37 @@ class Tracker:
 
 
 class MultiTracker:
-    def __init__(self):
+    def __init__(self, trackerType, trackerLife):
         self.trackers = []
+        self.trackerType = trackerType
+        self.trackerLife = trackerLife
 
     def add(self, tracker, frame, trackBox):
         tracker.init(frame, trackBox)
         self.trackers.append(tracker)
 
-    def update(self, frame):
+    def matchDetected(self, detectedBox, fitFunction, frame):
+        # Update all trackers to current frame
+        self._update(frame)
+
+        # Find best tracker for each detection box
+        iouFloor = 0.5
+        if detectedBox is not None:
+            for b in detectedBox:
+                b = (b[0], b[1]), (b[2], b[3])
+                bestTracker, iouValue = fitFunction(self.trackers, b, iouFloor)
+
+                if bestTracker is not None:
+                    bestTracker.paired = True
+                    bestTracker.trackBox = rectBoxToTrackBox(b)
+                else:
+                    newTracker = Tracker(self.trackerType, self.trackerLife)
+                    self.add(newTracker, frame, rectBoxToTrackBox(b))
+
+            # Update trackers' life
+            self._updateTrackersLife()
+
+    def _update(self, frame):
         trackBoxes = []
         retRes = True
         for t in self.trackers:
@@ -129,8 +155,14 @@ class MultiTracker:
             retRes = retRes & res
         return retRes, trackBoxes
 
-    def matchDetected(self, detectedBox, fitFunction=max):
-        pass
+    def _updateTrackersLife(self):
+        for tracker in self.trackers:
+            if tracker.paired:
+                tracker.life = self.trackerLife
+            else:
+                tracker.life -= 1
+                if tracker.life == 0:
+                    self.trackers.remove(tracker)
 
     def resetPaired(self):
         for t in self.trackers:
