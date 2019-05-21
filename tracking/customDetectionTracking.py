@@ -20,7 +20,7 @@ frameCount = 0
 
 ioUFloor = 0.3
 trackerType = "KCF"
-trackerLife = 15
+trackerLife = 10
 
 with tf.Session() as sess:
     cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P2L_S5_C3.1/P2L_S5_C3.1.mp4")
@@ -82,7 +82,7 @@ with tf.Session() as sess:
 
         end = time.time()
         totalTime = round((end - start) * 1000, 3)
-        # print("[{}] {} trackers alive  (update in {} ms)".format(frameCount, len(multiTracker.trackers), totalTime))
+        print("[{}] {} trackers / {} detected (update in {} ms)".format(frameCount, len(multiTracker.trackers), len(boxes), totalTime))
 
         k = cv.waitKey(20)
         if k == ord("q"):
