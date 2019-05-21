@@ -115,6 +115,9 @@ class MultiTracker:
             retRes = retRes & res
         return retRes, trackBoxes
 
+    def matchDetected(self):
+        pass
+
     def resetPaired(self):
         for t in self.trackers:
             t.paired = False
