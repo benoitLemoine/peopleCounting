@@ -18,14 +18,14 @@ input_tensor, output_tensors = utils.read_pb_return_tensors(tf.get_default_graph
 
 frameCount = 0
 
-ioUFloor = 0.3
+iouFloor = 0.3
 trackerType = "KCF"
 trackerLife = 10
 
 with tf.Session() as sess:
     cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P2L_S5_C3.1/P2L_S5_C3.1.mp4")
     # cap = cv.VideoCapture(0)
-    multiTracker = tr.MultiTracker()
+    multiTracker = tr.MultiTracker(trackerType, trackerLife)
 
     while True:
         start = time.time()
@@ -50,34 +50,19 @@ with tf.Session() as sess:
                 pBoxes.append(boxes[i])
         boxes = pBoxes
 
-        # Pairing detected with tracked
-        multiTracker.resetPaired()
-        multiTracker.update(frame)
+        # Match detection box with trackers
 
-        if boxes is not None:
-            for b in boxes:
-                b = (b[0], b[1]), (b[2], b[3])
-                bestTracker, iouValue = multiTracker.findMaxIoUTracker(b)
-
-                # Find best tracker
-                if iouValue >= ioUFloor:
-                    bestTracker.paired = True
-                    bestTracker.trackBox = tr.rectBoxToTrackBox(b)
-                else:
-                    newTracker = tr.Tracker(trackerType, trackerLife)
-                    multiTracker.add(newTracker, frame, tr.rectBoxToTrackBox(b))
+        # fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, iouFloor)
+        # multiTracker.matchDetected(boxes, fitFunction, frame)
+        multiTracker.matchDetected(boxes, tr.findClosestTracker, frame)
 
         # Updating tracker life
         for tracker in multiTracker.trackers:
             if tracker.paired:
-                tracker.life = trackerLife
                 b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
                 cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, 2)
-            else:
-                tracker.life -= 1
-                if tracker.life == 0:
-                    multiTracker.trackers.remove(tracker)
 
+        multiTracker.resetPaired()
         cv.imshow("Tracking", frame)
 
         end = time.time()

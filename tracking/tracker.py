@@ -1,6 +1,6 @@
 import cv2 as cv
-import time
 import random
+import math
 
 
 def getRandomColor():
@@ -15,70 +15,122 @@ def createTracker(trackerType):
     return tracker
 
 
-def rectBoxToTrackBox(box):
-    x = box[0][0]
-    y = box[0][1]
+def rectBoxToTrackBox(rectBox):
+    x = rectBox[0][0]
+    y = rectBox[0][1]
 
-    dx = box[1][0] - box[0][0]
-    dy = box[1][1] - box[0][1]
+    dx = rectBox[1][0] - rectBox[0][0]
+    dy = rectBox[1][1] - rectBox[0][1]
 
     return x, y, dx, dy
 
 
-def trackBoxToRectBox(box):
-    p1 = (int(box[0]), int(box[1]))
-    p2 = (int(box[0] + box[2]), int(box[1] + box[3]))
+def trackBoxToRectBox(trackBox):
+    p1 = (int(trackBox[0]), int(trackBox[1]))
+    p2 = (int(trackBox[0] + trackBox[2]), int(trackBox[1] + trackBox[3]))
 
     return p1, p2
 
 
-def resizeRectBox(box, baseSize, targetSize):
+def resizeRectBox(rectBox, baseSize, targetSize):
     yDist = targetSize[0] / baseSize[0]
     xDist = targetSize[1] / baseSize[1]
 
-    print(box)
+    print(rectBox)
 
-    p1x = box[0][0] * xDist
-    p1y = box[0][1] * yDist
+    p1x = rectBox[0][0] * xDist
+    p1y = rectBox[0][1] * yDist
 
-    p2x = box[1][0] * xDist
-    p2y = box[1][1] * yDist
+    p2x = rectBox[1][0] * xDist
+    p2y = rectBox[1][1] * yDist
 
     return (int(p1x), int(p1y)), (int(p2x), int(p2y))
 
 
-def resizeTrackBox(box, baseSize, targetSize):
+def resizeTrackBox(trackBox, baseSize, targetSize):
     yDist = targetSize[0] / baseSize[0]
     xDist = targetSize[1] / baseSize[1]
 
-    x = box[0] * xDist
-    y = box[1] * yDist
+    x = trackBox[0] * xDist
+    y = trackBox[1] * yDist
 
-    dx = box[2] * xDist
-    dy = box[3] * yDist
+    dx = trackBox[2] * xDist
+    dy = trackBox[3] * yDist
 
     return int(x), int(y), int(dx), int(dy)
 
 
-def computeRectBoxArea(rect):
-    dx = rect[1][0] - rect[0][0]
-    dy = rect[1][1] - rect[0][1]
+def computeRectBoxArea(rectBox):
+    dx = rectBox[1][0] - rectBox[0][0]
+    dy = rectBox[1][1] - rectBox[0][1]
     return abs(dx * dy)
 
 
 # Uses rectBox format !
-def computeIoU(box1, box2):
-    left = max(box1[0][0], box2[0][0])
-    right = min(box1[1][0], box2[1][0])
-    top = max(box1[0][1], box2[0][1])
-    bottom = min(box1[1][1], box2[1][1])
+def computeIoU(rectBox1, rectBox2):
+    left = max(rectBox1[0][0], rectBox2[0][0])
+    right = min(rectBox1[1][0], rectBox2[1][0])
+    top = max(rectBox1[0][1], rectBox2[0][1])
+    bottom = min(rectBox1[1][1], rectBox2[1][1])
 
     if left > right or top > bottom:
         return 0
 
     intersection = computeRectBoxArea(((left, top), (right, bottom)))
-    union = computeRectBoxArea(box1) + computeRectBoxArea(box2) - intersection
+    union = computeRectBoxArea(rectBox1) + computeRectBoxArea(rectBox2) - intersection
     return intersection / union
+
+
+def computeRectBoxCenter(rectBox):
+    x = (rectBox[1][0] - rectBox[0][0]) / 2
+    y = (rectBox[1][1] - rectBox[0][1]) / 2
+
+    return int(x), int(y)
+
+
+def computeTrackBoxCenter(trackBox):
+    x = trackBox[0] + trackBox[2] / 2
+    y = trackBox[1] + trackBox[3] / 2
+
+    return int(x), int(y)
+
+
+def computeDistanceBetweenPoints(p1, p2):
+    return math.sqrt(math.pow(p2[0] - p1[0], 2) + math.pow(p2[1] - p1[1], 2))
+
+
+# Fit functions
+def findMaxIoUTracker(trackers, detectedBox, iouFloor):
+    bestTracker = None
+    maxIou = 0
+
+    for t in trackers:
+        if not t.paired:
+            value = computeIoU(trackBoxToRectBox(t.trackBox), detectedBox)
+            if value > maxIou:
+                bestTracker = t
+                maxIou = value
+
+    if maxIou > iouFloor:
+        return bestTracker, maxIou
+    else:
+        return None, None
+
+
+def findClosestTracker(trackers, detectedBox):
+    bestTracker = None
+    minDistance = None
+
+    for t in trackers:
+        if not t.paired:
+            p1 = computeTrackBoxCenter(t.trackBox)
+            p2 = computeRectBoxCenter(detectedBox)
+            distance = computeDistanceBetweenPoints(p1, p2)
+            if minDistance is None or minDistance > distance:
+                bestTracker = t
+                minDistance = distance
+
+    return bestTracker, minDistance
 
 
 class Tracker:
@@ -99,14 +151,36 @@ class Tracker:
 
 
 class MultiTracker:
-    def __init__(self):
+    def __init__(self, trackerType, trackerLife):
         self.trackers = []
+        self.trackerType = trackerType
+        self.trackerLife = trackerLife
 
     def add(self, tracker, frame, trackBox):
         tracker.init(frame, trackBox)
         self.trackers.append(tracker)
 
-    def update(self, frame):
+    def matchDetected(self, detectedBoxes, fitFunction, frame):
+        # Update all trackers to current frame
+        self._update(frame)
+
+        # Find best tracker for each detection box
+        if detectedBoxes is not None:
+            for b in detectedBoxes:
+                b = (b[0], b[1]), (b[2], b[3])
+                bestTracker, iouValue = fitFunction(self.trackers, b)
+
+                if bestTracker is not None:
+                    bestTracker.paired = True
+                    bestTracker.trackBox = rectBoxToTrackBox(b)
+                else:
+                    newTracker = Tracker(self.trackerType, self.trackerLife)
+                    self.add(newTracker, frame, rectBoxToTrackBox(b))
+
+            # Update trackers' life
+            self._updateTrackersLife()
+
+    def _update(self, frame):
         trackBoxes = []
         retRes = True
         for t in self.trackers:
@@ -115,19 +189,15 @@ class MultiTracker:
             retRes = retRes & res
         return retRes, trackBoxes
 
+    def _updateTrackersLife(self):
+        for tracker in self.trackers:
+            if tracker.paired:
+                tracker.life = self.trackerLife
+            else:
+                tracker.life -= 1
+                if tracker.life == 0:
+                    self.trackers.remove(tracker)
+
     def resetPaired(self):
         for t in self.trackers:
             t.paired = False
-
-    def findMaxIoUTracker(self, detectedBox):
-        maxTracker = None
-        maxValue = 0
-
-        for t in self.trackers:
-            if not t.paired:
-                value = computeIoU(trackBoxToRectBox(t.trackBox), detectedBox)
-                if value > maxValue:
-                    maxTracker = t
-                    maxValue = value
-
-        return maxTracker, maxValue
