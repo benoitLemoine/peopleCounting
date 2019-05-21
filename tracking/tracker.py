@@ -81,6 +81,20 @@ def computeIoU(box1, box2):
     return intersection / union
 
 
+def findMaxIoUTracker(trackers, detectedBox):
+    maxTracker = None
+    maxValue = 0
+
+    for t in trackers:
+        if not t.paired:
+            value = computeIoU(trackBoxToRectBox(t.trackBox), detectedBox)
+            if value > maxValue:
+                maxTracker = t
+                maxValue = value
+
+    return maxTracker, maxValue
+
+
 class Tracker:
     def __init__(self, trackerType, life):
         self.life = life
@@ -115,22 +129,9 @@ class MultiTracker:
             retRes = retRes & res
         return retRes, trackBoxes
 
-    def matchDetected(self):
+    def matchDetected(self, detectedBox, fitFunction=max):
         pass
 
     def resetPaired(self):
         for t in self.trackers:
             t.paired = False
-
-    def findMaxIoUTracker(self, detectedBox):
-        maxTracker = None
-        maxValue = 0
-
-        for t in self.trackers:
-            if not t.paired:
-                value = computeIoU(trackBoxToRectBox(t.trackBox), detectedBox)
-                if value > maxValue:
-                    maxTracker = t
-                    maxValue = value
-
-        return maxTracker, maxValue
