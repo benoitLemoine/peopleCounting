@@ -117,7 +117,7 @@ def findMaxIoUTracker(trackers, detectedBox, iouFloor):
         return None, None
 
 
-def findClosestTracker(trackers, detectedBox):
+def findClosestTracker(trackers, detectedBox, maxDistanceRatio):
     bestTracker = None
     minDistance = None
 
@@ -130,40 +130,37 @@ def findClosestTracker(trackers, detectedBox):
                 bestTracker = t
                 minDistance = distance
 
-    return bestTracker, minDistance
+    if bestTracker is not None and maxDistanceRatio*max(bestTracker.trackBox[2], bestTracker.trackBox[3]) > minDistance:
+        return bestTracker, minDistance
+    else:
+        return None, None
 
 
 class Tracker:
-    def __init__(self, trackerType, life):
+    def __init__(self, life):
         self.life = life
-        self.color = getRandomColor()
-        self.paired = False
-        self.tracker = createTracker(trackerType)
+        self.activeTime = 0
+
         self.trackBox = []
+        self.paired = False
 
-    def init(self, frame, trackBox):
-        self.tracker.init(frame, tuple(trackBox))
+        self.color = getRandomColor()
+        self.counted = False
+
+    def init(self, trackBox):
         self.trackBox = trackBox
-
-    def update(self, frame):
-        res, self.trackBox = self.tracker.update(frame)
-        return res, self.trackBox
 
 
 class MultiTracker:
-    def __init__(self, trackerType, trackerLife):
+    def __init__(self, trackerLife):
         self.trackers = []
-        self.trackerType = trackerType
         self.trackerLife = trackerLife
 
-    def add(self, tracker, frame, trackBox):
-        tracker.init(frame, trackBox)
+    def add(self, tracker, trackBox):
+        tracker.init(trackBox)
         self.trackers.append(tracker)
 
-    def matchDetected(self, detectedBoxes, fitFunction, frame):
-        # Update all trackers to current frame
-        self._update(frame)
-
+    def matchDetected(self, detectedBoxes, fitFunction):
         # Find best tracker for each detection box
         if detectedBoxes is not None:
             for b in detectedBoxes:
@@ -173,21 +170,13 @@ class MultiTracker:
                 if bestTracker is not None:
                     bestTracker.paired = True
                     bestTracker.trackBox = rectBoxToTrackBox(b)
+                    bestTracker.activeTime += 1
                 else:
-                    newTracker = Tracker(self.trackerType, self.trackerLife)
-                    self.add(newTracker, frame, rectBoxToTrackBox(b))
+                    newTracker = Tracker(self.trackerLife)
+                    self.add(newTracker, rectBoxToTrackBox(b))
 
             # Update trackers' life
             self._updateTrackersLife()
-
-    def _update(self, frame):
-        trackBoxes = []
-        retRes = True
-        for t in self.trackers:
-            res, trackBox = t.update(frame)
-            trackBoxes.append(trackBox)
-            retRes = retRes & res
-        return retRes, trackBoxes
 
     def _updateTrackersLife(self):
         for tracker in self.trackers:
