@@ -51,7 +51,10 @@ with tf.Session() as sess:
         boxes = pBoxes
 
         # Match detection box with trackers
-        multiTracker.matchDetected(boxes, tr.findMaxIoUTracker, frame)
+
+        # fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, iouFloor)
+        # multiTracker.matchDetected(boxes, fitFunction, frame)
+        multiTracker.matchDetected(boxes, tr.findClosestTracker, frame)
 
         # Updating tracker life
         for tracker in multiTracker.trackers:
@@ -64,7 +67,7 @@ with tf.Session() as sess:
 
         end = time.time()
         totalTime = round((end - start) * 1000, 3)
-        print("[{}] {} trackers alive  (update in {} ms)".format(frameCount, len(multiTracker.trackers), totalTime))
+        print("[{}] {} trackers / {} detected (update in {} ms)".format(frameCount, len(multiTracker.trackers), len(boxes), totalTime))
 
         k = cv.waitKey(20)
         if k == ord("q"):

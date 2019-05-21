@@ -1,6 +1,6 @@
-def printSomme(a, b=0):
-    print(a+b)
+import tracking.tracker as tr
 
+p1 = (0, 0)
+p2 = (1, 1)
 
-f = printSomme(2)
-f(3)
+print(tr.computeDistanceBetweenPoints(p1, p2))
