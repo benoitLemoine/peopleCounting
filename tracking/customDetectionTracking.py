@@ -2,6 +2,7 @@ import cv2 as cv
 import tensorflow as tf
 import numpy as np
 import time
+import statistics
 from PIL import Image
 
 import tracking.tracker as tr
@@ -21,11 +22,15 @@ peopleCount = 0
 
 trackerLife = 10
 
+
+detectionTime = []
+trackingTime = []
+
 with tf.Session() as sess:
     # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd/2016_04_07_18_24_54BackColor.avi")
     # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/MOT_dataset/2DMOT2015/train/ADL-Rundle-6/img1/ADL-Rundle-6.mp4")
-    # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P2L_S5_C3.1/P2L_S5_C3.1.mp4")
-    cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P1E_S1_C1/P1E_S1_C1.mp4")
+    cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P2L_S5_C3.1/P2L_S5_C3.1.mp4")
+    # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P1E_S1_C1/P1E_S1_C1.mp4")
     # cap = cv.VideoCapture(0)
     multiTracker = tr.MultiTracker(trackerLife)
 
@@ -44,7 +49,11 @@ with tf.Session() as sess:
         img_resized = img_resized / 255.
 
         # Detecting
+        s = time.time()
         boxes, scores = sess.run(output_tensors, feed_dict={input_tensor: np.expand_dims(img_resized, axis=0)})
+        e = time.time()
+        detectionTime.append(e-s)
+
         boxes, scores, labels = utils.cpu_nms(boxes, scores, num_classes, score_thresh=0.4, iou_thresh=0.5)
 
         nbrTrackers = 0
@@ -61,17 +70,23 @@ with tf.Session() as sess:
             # Match detection box with trackers
             # fitFunction = lambda tracker, box:  tr.findClosestTracker(tracker, box, 0.5)
             fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, 0.5)
+
+            s = time.time()
             multiTracker.matchDetected(boxes, fitFunction)
+            e = time.time()
+            trackingTime.append(e-s)
 
             # Updating tracker life
             for tracker in multiTracker.trackers:
                 if tracker.paired and tracker.activeTime > 25:
+                    b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
+
                     if not tracker.counted:
                         peopleCount += 1
                         tracker.counted = True
-
-                    b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
-                    cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, 2)
+                        cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, -1)
+                    else:
+                        cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, 2)
 
             multiTracker.resetPaired()
 
@@ -89,6 +104,8 @@ with tf.Session() as sess:
         if k == ord("q"):
             break
 
-    print("Counted {} people in total".format(peopleCount))
+    print("Counted {} people in total on {} frames".format(peopleCount, frameCount))
+    print("Detection median time {} ms".format(statistics.median(detectionTime) * 1000))
+    print("Tracking median time {} ms".format(statistics.median(trackingTime) * 1000))
     cv.destroyAllWindows()
     cap.release()
