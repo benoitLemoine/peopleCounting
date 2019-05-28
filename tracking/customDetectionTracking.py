@@ -7,6 +7,7 @@ from PIL import Image
 
 import tracking.tracker as tr
 from core import utils
+from utils.PCDS_dataset.utils import removeCameraWatermark
 
 classesPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/data/coco.names"
 modelPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/checkpoint/yolov3_cpu_nms.pb"
@@ -27,9 +28,10 @@ detectionTime = []
 trackingTime = []
 
 with tf.Session() as sess:
+    cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd/2016_04_07_19_43_00BackColor.avi")
     # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd/2016_04_07_18_24_54BackColor.avi")
     # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/MOT_dataset/2DMOT2015/train/ADL-Rundle-6/img1/ADL-Rundle-6.mp4")
-    cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P2L_S5_C3.1/P2L_S5_C3.1.mp4")
+    # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P2L_S5_C3.1/P2L_S5_C3.1.mp4")
     # cap = cv.VideoCapture("/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P1E_S1_C1/P1E_S1_C1.mp4")
     # cap = cv.VideoCapture(0)
     multiTracker = tr.MultiTracker(trackerLife)
@@ -43,6 +45,9 @@ with tf.Session() as sess:
             break
 
         # Resizing frame
+        frame = removeCameraWatermark(frame)
+        frame = cv.convertScaleAbs(frame, alpha=3, beta=50)
+
         frameRGB = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
         image = Image.fromarray(frameRGB)
         img_resized = np.array(image.resize(size=(IMAGE_H, IMAGE_W)), dtype=np.float32)
