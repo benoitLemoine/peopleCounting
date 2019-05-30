@@ -99,6 +99,10 @@ def computeDistanceBetweenPoints(p1, p2):
     return math.sqrt(math.pow(p2[0] - p1[0], 2) + math.pow(p2[1] - p1[1], 2))
 
 
+def doNothing(tracker):
+    pass
+
+
 # Fit functions
 def findMaxIoUTracker(trackers, detectedBox, iouFloor):
     bestTracker = None
@@ -130,7 +134,8 @@ def findClosestTracker(trackers, detectedBox, maxDistanceRatio):
                 bestTracker = t
                 minDistance = distance
 
-    if bestTracker is not None and maxDistanceRatio*max(bestTracker.trackBox[2], bestTracker.trackBox[3]) > minDistance:
+    if bestTracker is not None and maxDistanceRatio * max(bestTracker.trackBox[2],
+                                                          bestTracker.trackBox[3]) > minDistance:
         return bestTracker, minDistance
     else:
         return None, None
@@ -152,15 +157,16 @@ class Tracker:
 
 
 class MultiTracker:
-    def __init__(self, trackerLife):
+    def __init__(self, trackerLife, trackerActiveTime):
         self.trackers = []
         self.trackerLife = trackerLife
+        self.trackerActiveTime = trackerActiveTime
 
     def add(self, tracker, trackBox):
         tracker.init(trackBox)
         self.trackers.append(tracker)
 
-    def matchDetected(self, detectedBoxes, fitFunction):
+    def matchDetected(self, detectedBoxes, fitFunction, onJustCounted=doNothing, onCounted=doNothing, onNotCounted=doNothing):
         # Find best tracker for each detection box
         if detectedBoxes is not None:
             for b in detectedBoxes:
@@ -176,12 +182,22 @@ class MultiTracker:
                     self.add(newTracker, rectBoxToTrackBox(b))
 
             # Update trackers' life
-            self._updateTrackersLife()
+            self._updateTrackersLife(onJustCounted, onCounted, onNotCounted)
+            self.resetPaired()
 
-    def _updateTrackersLife(self):
+    def _updateTrackersLife(self, onJustCounted, onCounted, onNotCounted):
         for tracker in self.trackers:
             if tracker.paired:
                 tracker.life = self.trackerLife
+
+                if tracker.activeTime > self.trackerActiveTime:
+                    if not tracker.counted:
+                        onJustCounted(tracker)
+                        tracker.counted = True
+                    else:
+                        onCounted(tracker)
+                else:
+                    onNotCounted(tracker)
             else:
                 tracker.life -= 1
                 if tracker.life == 0:

@@ -1,27 +1,20 @@
-import cv2 as cv
-import tensorflow as tf
-import numpy as np
-import time
 import statistics
-from PIL import Image
+import time
+
+import cv2 as cv
+import numpy as np
+import tensorflow as tf
 
 import tracking.tracker as tr
 from core import utils
-from datasets.PCDS_dataset.utils import removeCameraWatermark
-
-classesPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/data/coco.names"
-modelPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/checkpoint/yolov3_cpu_nms.pb"
-
-IMAGE_H, IMAGE_W = 416, 416
-classes = utils.read_coco_names(classesPath)
-num_classes = len(classes)
-input_tensor, output_tensors = utils.read_pb_return_tensors(tf.get_default_graph(), modelPath,
-                                                            ["Placeholder:0", "concat_9:0", "mul_6:0"])
+from detection.utils import IMAGE_H, IMAGE_W, input_tensor, output_tensors, num_classes, getOnlyDetectedPeople, \
+    preprocessFrame
 
 frameCount = 0
 peopleCount = 0
 
 trackerLife = 10
+trackerActiveTime = 25
 
 detectionTime = []
 trackingTime = []
@@ -41,7 +34,7 @@ with tf.Session() as sess:
     resultPath = destPath + "/result" + videoName
 
     cap = cv.VideoCapture(videoPath)
-    multiTracker = tr.MultiTracker(trackerLife)
+    multiTracker = tr.MultiTracker(trackerLife, trackerActiveTime)
 
     first = True
     while True:
@@ -61,12 +54,7 @@ with tf.Session() as sess:
             first = False
 
         # Processing frame
-        frame = removeCameraWatermark(frame)
-        # frame = cv.convertScaleAbs(frame, alpha=5, beta=50)
-        frameRGB = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-        image = Image.fromarray(frameRGB)
-        img_resized = np.array(image.resize(size=(IMAGE_H, IMAGE_W)), dtype=np.float32)
-        img_resized = img_resized / 255.
+        img_resized = preprocessFrame(frame)
 
         # Detecting
         s = time.time()
@@ -76,39 +64,32 @@ with tf.Session() as sess:
 
         boxes, scores, labels = utils.cpu_nms(boxes, scores, num_classes, score_thresh=0.4, iou_thresh=0.5)
 
-        nbrTrackers = 0
         nbrDetected = 0
+        nbrTrackers = 0
 
         if boxes is not None:
             # Keeping only box labelled "person"
-            pBoxes = []
-            for i in np.arange(len(boxes)):
-                if labels[i] == 0:
-                    pBoxes.append(boxes[i])
-            boxes = pBoxes
+            boxes = getOnlyDetectedPeople(boxes, labels)
 
             # Match detection box with trackers
             # fitFunction = lambda tracker, box:  tr.findClosestTracker(tracker, box, 0.5)
             fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, 0.5)
 
+            def onJustCounted(tracker):
+                global peopleCount
+                b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
+                cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, -1)
+                peopleCount += 1
+
+            def onCounted(tracker):
+                b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
+                cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, 2)
+
+
             s = time.time()
-            multiTracker.matchDetected(boxes, fitFunction)
+            multiTracker.matchDetected(boxes, fitFunction, onJustCounted=onJustCounted, onCounted=onCounted)
             e = time.time()
             trackingTime.append(e - s)
-
-            # Updating tracker life
-            for tracker in multiTracker.trackers:
-                if tracker.paired and tracker.activeTime > 25:
-                    b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
-
-                    if not tracker.counted:
-                        peopleCount += 1
-                        tracker.counted = True
-                        cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, -1)
-                    else:
-                        cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, 2)
-
-            multiTracker.resetPaired()
 
             nbrDetected = len(boxes)
             nbrTrackers = len(multiTracker.trackers)
@@ -128,6 +109,7 @@ with tf.Session() as sess:
     print("Counted {} people in total on {} frames".format(peopleCount, frameCount))
     print("Detection median time {} ms".format(statistics.median(detectionTime) * 1000))
     print("Tracking median time {} ms".format(statistics.median(trackingTime) * 1000))
+
     cv.destroyAllWindows()
     writer.release()
     cap.release()
