@@ -70,7 +70,7 @@ try:
 
         pred_boxes, pred_scores, pred_labels = utils.cpu_nms(pred_boxes, pred_confs*pred_probs, NUM_CLASSES,
                                                       score_thresh=SCORE_THRESH, iou_thresh=IOU_THRESH)
-        # image = utils.draw_boxes(image, pred_boxes, pred_scores, pred_labels, CLASSES, [IMAGE_H, IMAGE_W], show=True)
+        # image = datasets.draw_boxes(image, pred_boxes, pred_scores, pred_labels, CLASSES, [IMAGE_H, IMAGE_W], show=True)
         true_boxes = np.array(true_boxes_list)
         box_centers, box_sizes = true_boxes[:,0:2], true_boxes[:,2:4]
 

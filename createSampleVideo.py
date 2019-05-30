@@ -21,7 +21,7 @@ def resizeBox(box, baseSize, targetSize):
 
 classesPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/data/coco.names"
 modelPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/checkpoint/yolov3_cpu_nms.pb"
-destPath = "/home/benoit/Documents/Stage2A/resources"
+destPath = "/home/benoit/Documents/Stage2A/resources/results/detection"
 
 IMAGE_H, IMAGE_W = 416, 416
 classes = utils.read_coco_names(classesPath)

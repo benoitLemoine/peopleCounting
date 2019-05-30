@@ -9,6 +9,9 @@ def removeCameraWatermark(frame):
     lowRedTop = np.array([325, 55, 35])
     highRedTop = np.array([345, 75, 55])
 
+    lowPink = np.array([230, 230, 230])
+    highPink = np.array([250, 250, 250])
+
     lowRedMid = np.array([145, 70, 0])
     highRedMid = np.array([180, 255, 255])
 
@@ -21,7 +24,8 @@ def removeCameraWatermark(frame):
         maskBottom = cv.inRange(frameHSV, lowRedBottom, highRedBottom)
         maskMid = cv.inRange(frameHSV, lowRedMid, highRedMid)
         maskTop = cv.inRange(frameHSV, lowRedTop, highRedTop)
-        mask = maskBottom + maskTop + maskMid
+        maskPink = cv.inRange(frameHSV, lowPink, highPink)
+        mask = maskBottom + maskTop + maskMid + maskPink
 
         processedRois.append(cv.inpaint(roi, mask, 3, cv.INPAINT_TELEA))
 

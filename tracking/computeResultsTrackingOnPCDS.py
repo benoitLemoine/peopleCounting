@@ -6,6 +6,7 @@ from PIL import Image
 
 import tracking.tracker as tr
 from core import utils
+from datasets.PCDS_dataset.utils import removeCameraWatermark
 
 classesPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/data/coco.names"
 modelPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/checkpoint/yolov3_cpu_nms.pb"
@@ -16,7 +17,7 @@ num_classes = len(classes)
 input_tensor, output_tensors = utils.read_pb_return_tensors(tf.get_default_graph(), modelPath,
                                                             ["Placeholder:0", "concat_9:0", "mul_6:0"])
 
-basePath = "/home/benoit/Documents/Stage2A/resources/hey/25_20160407_back/normal/crowd"
+basePath = "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd"
 labelPath = basePath + "/label.txt"
 
 file = open(labelPath, "r")
@@ -37,7 +38,7 @@ for line in lines[4:]:
 
 
 # Counting people on each video
-resFile = open(basePath + "/results.txt", "w+")
+resFile = open(basePath + "/resultsWithoutWatermark.txt", "w+")
 resFile.write("Active time: {}\n".format(activeTime))
 resFile.write("Tracker life: {}\n".format(trackerLife))
 with tf.Session() as sess:
@@ -54,6 +55,7 @@ with tf.Session() as sess:
                 break
 
             # Resizing frame
+            frame = removeCameraWatermark(frame)
             frameRGB = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
             image = Image.fromarray(frameRGB)
             img_resized = np.array(image.resize(size=(IMAGE_H, IMAGE_W)), dtype=np.float32)
