@@ -13,8 +13,8 @@ from detection.utils import IMAGE_H, IMAGE_W, input_tensor, output_tensors, num_
 frameCount = 0
 peopleCount = 0
 
-trackerLife = 10
-trackerActiveTime = 25
+trackerLifeInSecond = 0.5
+trackerActiveTimeInSecond = 1
 
 detectionTime = []
 trackingTime = []
@@ -33,10 +33,19 @@ with tf.Session() as sess:
     videoName = videoPath.split("/")[-1]
     resultPath = destPath + "/result" + videoName
 
-    cap = cv.VideoCapture(videoPath)
-    multiTracker = tr.MultiTracker(trackerLife, trackerActiveTime)
+    print("Processing {}".format(videoName))
 
-    first = True
+    cap = cv.VideoCapture(videoPath)
+    trackerLifeInFrame = tr.getTimeInFrames(trackerLifeInSecond, cap)
+    trackerActiveTimeInFrame = tr.getTimeInFrames(trackerActiveTimeInSecond, cap)
+    multiTracker = tr.MultiTracker(trackerLifeInFrame, trackerActiveTimeInFrame)
+
+    h = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    w = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+
+    fourcc = cv.VideoWriter_fourcc(*'XVID')
+    writer = cv.VideoWriter(resultPath, fourcc, 25, (w, h))
+
     while True:
         start = time.time()
 
@@ -44,14 +53,6 @@ with tf.Session() as sess:
         res, frame = cap.read()
         if not res:
             break
-
-        if first:
-            print("Processing {}".format(videoName))
-            h, w, l = frame.shape
-            size = w, h
-            fourcc = cv.VideoWriter_fourcc(*'XVID')
-            writer = cv.VideoWriter(resultPath, fourcc, 25, size)
-            first = False
 
         # Processing frame
         img_resized = preprocessFrame(frame)
@@ -75,11 +76,13 @@ with tf.Session() as sess:
             # fitFunction = lambda tracker, box:  tr.findClosestTracker(tracker, box, 0.5)
             fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, 0.5)
 
+
             def onJustCounted(tracker):
                 global peopleCount
                 b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
                 cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, -1)
                 peopleCount += 1
+
 
             def onCounted(tracker):
                 b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])

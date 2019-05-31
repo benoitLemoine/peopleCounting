@@ -103,6 +103,10 @@ def doNothing(tracker):
     pass
 
 
+def getTimeInFrames(timeInSeconds, cap):
+    return int(timeInSeconds * cap.get(cv.CAP_PROP_FPS))
+
+
 # Fit functions
 def findMaxIoUTracker(trackers, detectedBox, iouFloor):
     bestTracker = None
