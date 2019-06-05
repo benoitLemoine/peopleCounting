@@ -32,6 +32,22 @@ def trackBoxToRectBox(trackBox):
     return p1, p2
 
 
+def toIntegerTrackBox(trackBox):
+    x = max(0, int(trackBox[0]))
+    y = max(0, int(trackBox[1]))
+    dx = max(0, int(trackBox[2]))
+    dy = max(0, int(trackBox[3]))
+    return x, y, dx, dy
+
+
+def toIntegerRectBox(rectBox):
+    x1 = max(0, int(rectBox[0][0]))
+    y1 = max(0, int(rectBox[0][1]))
+    x2 = max(0, int(rectBox[1][0]))
+    y2 = max(0, int(rectBox[1][1]))
+    return (x1, y1), (x2, y2)
+
+
 def resizeRectBox(rectBox, baseSize, targetSize):
     yDist = targetSize[0] / baseSize[0]
     xDist = targetSize[1] / baseSize[1]
@@ -145,6 +161,36 @@ def findClosestTracker(trackers, detectedBox, maxDistanceRatio):
         return None, None
 
 
+def findHistogramMatchingTracker(trackers, detectedBox, frame, minCorrelation):
+    bestTracker = None
+    maxCorrelation = None
+
+    db = toIntegerRectBox(detectedBox)
+    detectedRio = frame[db[0][0]:db[1][0], db[0][1]:db[1][1]]
+    detectedRio = cv.cvtColor(detectedRio, cv.COLOR_BGR2HSV)
+    histDetected = cv.calcHist(detectedRio, [0, 1], None, [50, 60], [0, 180] + [0, 256], accumulate=False)
+    histDetected = cv.normalize(histDetected, histDetected, alpha=0, beta=1, norm_type=cv.NORM_MINMAX)
+
+    for t in trackers:
+        if not t.paired:
+            tb = toIntegerTrackBox(t.trackBox)
+            trackerRio = frame[tb[0]:tb[0] + tb[2], tb[1]:tb[1] + tb[3]]
+            trackerRio = cv.cvtColor(trackerRio, cv.COLOR_BGR2HSV)
+            trackerHist = cv.calcHist(trackerRio, [0, 1], None, [50, 60], [0, 180] + [0, 256], accumulate=False)
+            trackerHist = cv.normalize(trackerHist, trackerHist, alpha=0, beta=1, norm_type=cv.NORM_MINMAX)
+
+            correlation = cv.compareHist(histDetected, trackerHist, cv.HISTCMP_CORREL)
+
+            if maxCorrelation is None or maxCorrelation < correlation:
+                bestTracker = t
+                maxCorrelation = correlation
+
+    if maxCorrelation is not None and maxCorrelation >= minCorrelation:
+        return bestTracker, maxCorrelation
+    else:
+        return None, None
+
+
 class Tracker:
     def __init__(self, life):
         self.life = life
@@ -170,7 +216,8 @@ class MultiTracker:
         tracker.init(trackBox)
         self.trackers.append(tracker)
 
-    def matchDetected(self, detectedBoxes, fitFunction, onJustCounted=doNothing, onCounted=doNothing, onNotCounted=doNothing):
+    def matchDetected(self, detectedBoxes, fitFunction, onJustCounted=doNothing, onCounted=doNothing,
+                      onNotCounted=doNothing):
         # Find best tracker for each detection box
         if detectedBoxes is not None:
             for b in detectedBoxes:

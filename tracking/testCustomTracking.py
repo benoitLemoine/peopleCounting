@@ -31,7 +31,7 @@ videoPaths = [
 with tf.Session() as sess:
     videoPath = videoPaths[4]
     videoName = videoPath.split("/")[-1]
-    resultPath = destPath + "/result" + videoName
+    resultPath = destPath + "/result_hist_" + videoName
 
     print("Processing {}".format(videoName))
 
@@ -74,8 +74,8 @@ with tf.Session() as sess:
 
             # Match detection box with trackers
             # fitFunction = lambda tracker, box:  tr.findClosestTracker(tracker, box, 0.5)
-            fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, 0.5)
-
+            # fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, 0.5)
+            fitFunction = lambda tracker, box: tr.findHistogramMatchingTracker(tracker, box, frame, 0.5)
 
             def onJustCounted(tracker):
                 global peopleCount
