@@ -9,6 +9,8 @@ import tracking.tracker as tr
 from core import utils
 from detection.utils import IMAGE_H, IMAGE_W, input_tensor, output_tensors, num_classes, getOnlyDetectedPeople, \
     preprocessFrame
+from tracking.pairingFunctions import pairWithMaxIou, pairWithNearestCenter, pairWithHistogramCorrelation
+from tracking.utils import getTimeInFrames, resizeTrackBox
 
 frameCount = 0
 peopleCount = 0
@@ -36,8 +38,8 @@ with tf.Session() as sess:
     print("Processing {}".format(videoName))
 
     cap = cv.VideoCapture(videoPath)
-    trackerLifeInFrame = tr.getTimeInFrames(trackerLifeInSecond, cap)
-    trackerActiveTimeInFrame = tr.getTimeInFrames(trackerActiveTimeInSecond, cap)
+    trackerLifeInFrame = getTimeInFrames(trackerLifeInSecond, cap)
+    trackerActiveTimeInFrame = getTimeInFrames(trackerActiveTimeInSecond, cap)
     multiTracker = tr.MultiTracker(trackerLifeInFrame, trackerActiveTimeInFrame)
 
     h = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
@@ -73,24 +75,24 @@ with tf.Session() as sess:
             boxes = getOnlyDetectedPeople(boxes, labels)
 
             # Match detection box with trackers
-            # fitFunction = lambda tracker, box:  tr.findClosestTracker(tracker, box, 0.5)
-            # fitFunction = lambda tracker, box: tr.findMaxIoUTracker(tracker, box, 0.5)
-            fitFunction = lambda tracker, box: tr.findHistogramMatchingTracker(tracker, box, frame, 0.5)
+            # pairingFunction = lambda trackers, boxes: pairWithMaxIou(trackers, boxes, 0.5)
+            # pairingFunction = lambda trackers, boxes:  pairWithNearestCenter(trackers, boxes, 1)
+            pairingFunction = lambda trackers, boxes: pairWithHistogramCorrelation(trackers, boxes, frame, 0.5)
 
             def onJustCounted(tracker):
                 global peopleCount
-                b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
+                b = resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
                 cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, -1)
                 peopleCount += 1
 
 
             def onCounted(tracker):
-                b = tr.resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
+                b = resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
                 cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, 2)
 
 
             s = time.time()
-            multiTracker.matchDetected(boxes, fitFunction, onJustCounted=onJustCounted, onCounted=onCounted)
+            multiTracker.matchDetected(boxes, pairingFunction, onJustCounted=onJustCounted, onCounted=onCounted)
             e = time.time()
             trackingTime.append(e - s)
 
