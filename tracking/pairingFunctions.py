@@ -5,7 +5,7 @@ from tracking.utils import computeIoU, trackBoxToRectBox, computeTrackBoxCenter,
     computeNormalizedHistogramTrackBox, computeNormalizedHistogramRectBox
 
 
-def pairWithMaxIou(trackers, detectedBoxes, iouFloor):
+def pairWithMaxIou(trackers, detectedBoxes, minIou):
     notPairedBoxes = []
 
     for detectedBox in detectedBoxes or []:
@@ -20,7 +20,7 @@ def pairWithMaxIou(trackers, detectedBoxes, iouFloor):
                     bestTracker = t
                     maxIou = iou
 
-        if bestTracker and maxIou > iouFloor:
+        if bestTracker and maxIou > minIou:
             bestTracker.paired = True
             bestTracker.trackBox = rectBoxToTrackBox(detectedBox)
             bestTracker.activeTime += 1
@@ -58,7 +58,7 @@ def pairWithNearestCenter(trackers, detectedBoxes, maxDistanceRatio):
     return notPairedBoxes
 
 
-def pairWithHistogramCorrelation(trackers, detectedBoxes, frame, correlationFloor):
+def pairWithHistogramCorrelation(trackers, detectedBoxes, frame, minCorrelation):
     notPairedBoxes = []
 
     # Compute all tracker histograms first
@@ -81,7 +81,7 @@ def pairWithHistogramCorrelation(trackers, detectedBoxes, frame, correlationFloo
                     bestTracker = tracker
                     maxCorrelation = correlation
 
-        if bestTracker and maxCorrelation > correlationFloor:
+        if bestTracker and maxCorrelation > minCorrelation:
             bestTracker.paired = True
             bestTracker.trackBox = rectBoxToTrackBox(detectedBox)
             bestTracker.activeTime += 1
