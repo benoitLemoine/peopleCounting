@@ -3,9 +3,6 @@ import random
 import sys
 import time
 
-import tracking.tracker as tr
-
-
 def getRandomColor():
     return random.randint(1, 255), random.randint(1, 255), random.randint(1, 255)
 

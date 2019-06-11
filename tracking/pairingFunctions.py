@@ -2,7 +2,8 @@ import cv2 as cv
 
 from tracking.utils import computeIoU, trackBoxToRectBox, computeTrackBoxCenter, computeRectBoxCenter, \
     computeDistanceBetweenPoints, rectBoxToTrackBox, \
-    computeNormalizedHistogramTrackBox, computeNormalizedHistogramRectBox
+    computeNormalizedHistogramTrackBox, computeNormalizedHistogramRectBox, computeMaxDimensionRectBox, \
+    computeMinDimensionRectBox
 
 
 def pairWithMaxIou(trackers, detectedBoxes, minIou):
@@ -47,7 +48,7 @@ def pairWithNearestCenter(trackers, detectedBoxes, maxDistanceRatio):
                     bestTracker = t
                     minDistance = distance
 
-        detectedBoxDim = max(detectedBox[1][0] - detectedBox[0][0], detectedBox[1][1] - detectedBox[0][1])
+        detectedBoxDim = computeMaxDimensionRectBox(detectedBox)
         if bestTracker and maxDistanceRatio * detectedBoxDim > minDistance:
             bestTracker.paired = True
             bestTracker.trackBox = rectBoxToTrackBox(detectedBox)
@@ -58,7 +59,7 @@ def pairWithNearestCenter(trackers, detectedBoxes, maxDistanceRatio):
     return notPairedBoxes
 
 
-def pairWithHistogramCorrelation(trackers, detectedBoxes, frame, minCorrelation):
+def pairWithHistogramCorrelation(trackers, detectedBoxes, frame, minCorrelation, maxDistanceRatio):
     notPairedBoxes = []
 
     # Compute all tracker histograms first
@@ -77,9 +78,15 @@ def pairWithHistogramCorrelation(trackers, detectedBoxes, frame, minCorrelation)
             if not tracker.paired:
                 correlation = cv.compareHist(detectedBoxHist, trackerHist, cv.HISTCMP_CORREL)
 
-                if bestTracker is None or maxCorrelation < correlation:
-                    bestTracker = tracker
-                    maxCorrelation = correlation
+                tcenter = computeTrackBoxCenter(tracker.trackBox)
+                dcenter = computeRectBoxCenter(detectedBox)
+                distance = computeDistanceBetweenPoints(tcenter, dcenter)
+                detectedBoxDim = computeMinDimensionRectBox(detectedBox)
+
+                if detectedBoxDim * maxDistanceRatio > distance:
+                    if bestTracker is None or maxCorrelation < correlation:
+                        bestTracker = tracker
+                        maxCorrelation = correlation
 
         if bestTracker and maxCorrelation > minCorrelation:
             bestTracker.paired = True

@@ -99,6 +99,14 @@ def computeDistanceBetweenPoints(p1, p2):
     return math.sqrt(math.pow(p2[0] - p1[0], 2) + math.pow(p2[1] - p1[1], 2))
 
 
+def computeMaxDimensionRectBox(rectBox):
+    return max(rectBox[1][0] - rectBox[0][0], rectBox[1][1] - rectBox[0][1])
+
+
+def computeMinDimensionRectBox(rectBox):
+    return min(rectBox[1][0] - rectBox[0][0], rectBox[1][1] - rectBox[0][1])
+
+
 def computeNormalizedHistogramTrackBox(trackBox, frame):
     tb = toIntegerTrackBox(trackBox)
     trackerRio = frame[tb[0]:tb[0] + tb[2], tb[1]:tb[1] + tb[3]]

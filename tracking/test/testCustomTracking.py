@@ -18,10 +18,12 @@ peopleCount = 0
 trackerLifeInSecond = 0.5
 trackerActiveTimeInSecond = 1
 
+savingVideo = False
+
 detectionTime = []
 trackingTime = []
 
-destPath = "/home/benoit/Documents/Stage2A/resources/results/tracking"
+destPath = "/home/benoit/Documents/Stage2A/resources/resultsVideo/tracking"
 videoPaths = [
     "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd/2016_04_07_19_43_00BackColor.avi",
     "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd/2016_04_07_18_24_54BackColor.avi",
@@ -45,8 +47,9 @@ with tf.Session() as sess:
     h = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
     w = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 
-    fourcc = cv.VideoWriter_fourcc(*'XVID')
-    writer = cv.VideoWriter(resultPath, fourcc, 25, (w, h))
+    if savingVideo:
+        fourcc = cv.VideoWriter_fourcc(*'XVID')
+        writer = cv.VideoWriter(resultPath, fourcc, 25, (w, h))
 
     while True:
         start = time.time()
@@ -77,7 +80,7 @@ with tf.Session() as sess:
             # Match detection box with trackers
             # pairingFunction = lambda trackers, boxes: pairWithMaxIou(trackers, boxes, 0.5)
             # pairingFunction = lambda trackers, boxes:  pairWithNearestCenter(trackers, boxes, 1)
-            pairingFunction = lambda trackers, boxes: pairWithHistogramCorrelation(trackers, boxes, frame, 0.5)
+            pairingFunction = lambda trackers, boxes: pairWithHistogramCorrelation(trackers, boxes, frame, 0.8, 0.3)
 
             def onJustCounted(tracker):
                 global peopleCount
@@ -100,7 +103,8 @@ with tf.Session() as sess:
             nbrTrackers = len(multiTracker.trackers)
 
         cv.imshow("Tracking", frame)
-        writer.write(frame)
+        if savingVideo:
+            writer.write(frame)
 
         end = time.time()
         totalTime = round((end - start) * 1000, 3)
@@ -115,6 +119,8 @@ with tf.Session() as sess:
     print("Detection median time {} ms".format(statistics.median(detectionTime) * 1000))
     print("Tracking median time {} ms".format(statistics.median(trackingTime) * 1000))
 
+    if savingVideo:
+        writer.release()
+
     cv.destroyAllWindows()
-    writer.release()
     cap.release()
