@@ -19,13 +19,14 @@ for file in os.listdir(gtPaths):
 
             xml = minidom.parse(gtPaths + "/" + file)
             countedIDs = []
+            frameCount = 0
             for frame in xml.getElementsByTagName("frame"):
-
+                frameCount += 1
                 for person in frame.getElementsByTagName("person"):
                     id = person.attributes["id"].value
 
                     if id not in countedIDs:
                         countedIDs.append(id)
-                        exporter.write(int(frame.attributes["number"].value))
+                        exporter.write(frameCount)
 
             exporter.close()

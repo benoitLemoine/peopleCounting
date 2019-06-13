@@ -10,6 +10,7 @@ from core import utils
 from detection.utils import IMAGE_H, IMAGE_W, input_tensor, output_tensors, num_classes, getOnlyDetectedPeople, \
     preprocessFrame
 from tracking.pairingFunctions import pairWithMaxIou, pairWithNearestCenter, pairWithHistogramCorrelation
+from tracking.resultsExporter import ResultsExporter
 from tracking.utils import getTimeInFrames, resizeTrackBox
 
 frameCount = 0
@@ -18,12 +19,13 @@ peopleCount = 0
 trackerLifeInSecond = 0.5
 trackerActiveTimeInSecond = 1
 
-savingVideo = False
+savingResults = False
 
 detectionTime = []
 trackingTime = []
 
-destPath = "/home/benoit/Documents/Stage2A/resources/resultsVideo/tracking"
+videoResBasePath = "/home/benoit/Documents/Stage2A/resources/resultsVideo/tracking"
+txtResBasePath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/results"
 videoPaths = [
     "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd/2016_04_07_19_43_00BackColor.avi",
     "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd/2016_04_07_18_24_54BackColor.avi",
@@ -33,9 +35,11 @@ videoPaths = [
     "/home/benoit/Documents/Stage2A/resources/CP_dataset/data/P1E_S1_C1/P1E_S1_C1.mp4"]
 
 with tf.Session() as sess:
-    videoPath = videoPaths[4]
-    videoName = videoPath.split("/")[-1]
-    resultPath = destPath + "/result_hist_" + videoName
+    videoPath = videoPaths[5]
+    videoName = videoPath.split("/")[-1][:-4]
+
+    videoResPath = videoResBasePath + "/result_hist_" + videoName + ".mp4"
+    txtResPath = txtResBasePath + "/CP/" + videoName + ".txt"
 
     print("Processing {}".format(videoName))
 
@@ -47,9 +51,10 @@ with tf.Session() as sess:
     h = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
     w = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 
-    if savingVideo:
+    if savingResults:
         fourcc = cv.VideoWriter_fourcc(*'XVID')
-        writer = cv.VideoWriter(resultPath, fourcc, 25, (w, h))
+        writer = cv.VideoWriter(videoResPath, fourcc, 25, (w, h))
+        exporter = ResultsExporter(txtResPath, videoPath)
 
     while True:
         start = time.time()
@@ -84,6 +89,10 @@ with tf.Session() as sess:
 
             def onJustCounted(tracker):
                 global peopleCount
+
+                if savingResults:
+                    exporter.write(frameCount)
+
                 b = resizeTrackBox(tracker.trackBox, (IMAGE_H, IMAGE_W), frame.shape[0:2])
                 cv.rectangle(frame, (b[0], b[1]), (b[0] + b[2], b[1] + b[3]), tracker.color, -1)
                 peopleCount += 1
@@ -103,7 +112,7 @@ with tf.Session() as sess:
             nbrTrackers = len(multiTracker.trackers)
 
         cv.imshow("Tracking", frame)
-        if savingVideo:
+        if savingResults:
             writer.write(frame)
 
         end = time.time()
@@ -119,8 +128,9 @@ with tf.Session() as sess:
     print("Detection median time {} ms".format(statistics.median(detectionTime) * 1000))
     print("Tracking median time {} ms".format(statistics.median(trackingTime) * 1000))
 
-    if savingVideo:
+    if savingResults:
         writer.release()
+        exporter.close()
 
     cv.destroyAllWindows()
     cap.release()
