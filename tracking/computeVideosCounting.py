@@ -30,6 +30,7 @@ with tf.Session() as sess:
             for file in os.listdir(videoBasePath + "/" + folder):
                 if file.startswith(videoName):
                     break
+
             videoPath = videoBasePath + "/" + folder + "/" + file
             gtPath = gtBasePath + "/" + folder + "/" + file
 
