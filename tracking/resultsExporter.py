@@ -46,20 +46,26 @@ def computeResultsScores(gtFilePath, resultsFilePath, maxSpan, deltaTimeFunction
     truePositive = []
     falsePositive = []
     for resTime in resTimestamps or []:
-        minDelta = deltaTimeFunction(resTime, gtTimestamps[0])
-        bestMatch = gtTimestamps[0]
+        if gtTimestamps:
+            minDelta = deltaTimeFunction(resTime, gtTimestamps[0])
+            bestMatch = gtTimestamps[0]
 
-        for gtTime in gtTimestamps[1:] or []:
-            delta = deltaTimeFunction(resTime, gtTime)
+            for gtTime in gtTimestamps[1:] or []:
+                delta = deltaTimeFunction(resTime, gtTime)
 
-            if delta < minDelta:
-                minDelta = delta
-                bestMatch = gtTime
+                if delta < minDelta:
+                    minDelta = delta
+                    bestMatch = gtTime
 
-        if minDelta < maxSpan:
-            gtTimestamps.remove(bestMatch)
-            truePositive.append(resTime)
-            map.append((bestMatch, resTime))
+            if minDelta < maxSpan:
+                gtTimestamps.remove(bestMatch)
+                truePositive.append(resTime)
+                map.append((bestMatch, resTime))
+
+            else:
+                falsePositive.append(resTime)
+
+        # If there are more bounding boxes than groundtruth => remaining are false positives
         else:
             falsePositive.append(resTime)
 
@@ -84,6 +90,7 @@ def computeResultsScores(gtFilePath, resultsFilePath, maxSpan, deltaTimeFunction
     # print("{} false positives: {}".format(falsePositiveCount, falsePositive))
 
     return truePositiveRate, falsePositiveRate
+
 
 def computeDeltaTimeWithOffset(resTime, gtTime, offset):
     return abs(offset + gtTime - resTime)
