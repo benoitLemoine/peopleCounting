@@ -22,7 +22,9 @@ for folder in os.listdir(gtFolderPath):
             count += 1
 
             tpr, fpr = computeResultsScores(gtFilePath, resFilePath, maxSpan, deltaTimeFunction)
-            print("{} ({}  /  {})".format(file, round(tpr, 2), round(fpr, 2)))
+
+            if tpr < 0.66:
+                print("{} ({}  /  {})".format(file, round(tpr, 2), round(fpr, 2)))
 
             sumTpr += tpr
             sumFpr += fpr
