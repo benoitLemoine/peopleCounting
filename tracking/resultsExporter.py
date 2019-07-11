@@ -45,6 +45,7 @@ def computeResultsScores(gtFilePath, resultsFilePath, maxSpan, deltaTimeFunction
     # Find best match
     truePositive = []
     falsePositive = []
+    falseNegative = []
     for resTime in resTimestamps or []:
         if gtTimestamps:
             minDelta = deltaTimeFunction(resTime, gtTimestamps[0])
@@ -72,24 +73,17 @@ def computeResultsScores(gtFilePath, resultsFilePath, maxSpan, deltaTimeFunction
     for unfoundGt in gtTimestamps:
         map.append((unfoundGt, None))
 
-    # map.sort()
+    falseNegative = gtTimestamps
 
     truePositiveCount = len(truePositive)
     falsePositiveCount = len(falsePositive)
+    falseNegativeCount = len(falseNegative)
 
-    truePositiveRate = truePositiveCount / resCount
-    falsePositiveRate = falsePositiveCount / resCount
+    precision = truePositiveCount / (truePositiveCount + falsePositiveCount)
+    recall = truePositiveCount / (truePositiveCount + falseNegativeCount)
+    f1 = 2 * truePositiveCount / (2 * truePositiveCount + falsePositiveCount + falseNegativeCount)
 
-    # print("|GT|  |RESULT|")
-    # for gt, res in map:
-    #     print("{} -> {}".format(gt, res))
-    #
-    # print("\n{} people in the groundtruth".format(gtCount))
-    # print("{} people counted\n".format(resCount))
-    # print("{} true positives".format(truePositiveCount))
-    # print("{} false positives: {}".format(falsePositiveCount, falsePositive))
-
-    return truePositiveRate, falsePositiveRate
+    return precision, recall, f1
 
 
 def computeDeltaTimeWithOffset(resTime, gtTime, offset):
