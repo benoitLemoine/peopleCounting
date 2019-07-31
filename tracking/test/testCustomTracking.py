@@ -5,8 +5,13 @@ import cv2 as cv
 
 import tracking.tracker as tr
 
+<<<<<<< HEAD
 from detection.yolov3.yolov3 import YoloV3Net, IMAGE_W, IMAGE_H
 # from detection.tinyYolo.tinyYoloV3 import TinyYoloV3Net, IMAGE_W, IMAGE_H
+=======
+# from detection.yolov3.yolov3 import YoloV3Net, IMAGE_W, IMAGE_H
+from detection.tinyYolo.tinyYoloV3 import TinyYoloV3Net, IMAGE_W, IMAGE_H
+>>>>>>> 4a8363aed189d24eda8f7e78912636dcd8d6e2fc
 
 from tracking.pairingFunctions import pairWithHistogramCorrelation
 from tracking.resultsExporter import ResultsExporter
@@ -37,7 +42,11 @@ videoResPath = videoResBasePath + "/result_hist_" + videoName + ".mp4"
 txtResPath = txtResBasePath + "/CP/" + videoName + ".txt"
 
 # Loading CNN
+<<<<<<< HEAD
 net = YoloV3Net()
+=======
+net = TinyYoloV3Net()
+>>>>>>> 4a8363aed189d24eda8f7e78912636dcd8d6e2fc
 
 print("Processing {}".format(videoName))
 
