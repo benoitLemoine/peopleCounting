@@ -5,8 +5,8 @@ import numpy as np
 from PIL import Image
 from core import utils
 
-classesPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/data/coco.names"
-modelPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/checkpoint/yolov3_cpu_nms.pb"
+classesPath = "../../data/coco.names"
+modelPath = "../../checkpoint/yolov3_cpu_nms.pb"
 
 IMAGE_H, IMAGE_W = 416, 416
 classes = utils.read_coco_names(classesPath)

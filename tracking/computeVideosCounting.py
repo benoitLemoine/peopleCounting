@@ -3,14 +3,14 @@ import cv2 as cv
 
 import tracking.tracker as tr
 
-from detection.yolov3.yolov3 import YoloV3Net, preprocessFrame
+from detection.yolov3.yolov3 import YoloV3Net
 from tracking.pairingFunctions import pairWithMaxIou
 from tracking.resultsExporter import ResultsExporter
 from tracking.utils import getTimeInFrames
 
-gtBasePath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/formatedGt"
-videoBasePath = "/home/benoit/Documents/Stage2A/resources/videos"
-txtResBasePath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/results"
+gtBasePath = "../../resources/resultsTxt/formatedGt"
+videoBasePath = "../../resources/videos"
+txtResBasePath = "../../resources/resultsTxt/results"
 
 trackerLifeInSeconds = 0.5
 trackerActiveTimeInSeconds = 1
@@ -51,8 +51,7 @@ for folder in os.listdir(gtBasePath):
 
                 if not ret:
                     break
-                img_resized = preprocessFrame(frame)
-                boxes = net.run(img_resized)
+                boxes = net.run(frame)
 
                 if boxes is not None:
                     # Match detection box with trackers

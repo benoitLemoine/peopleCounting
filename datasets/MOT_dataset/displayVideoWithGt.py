@@ -1,11 +1,11 @@
 import os
 import cv2 as cv
 
-gtBasePath = "/home/benoit/Documents/Stage2A/resources/MOT_dataset/2DMOT2015/train"
+gtBasePath = "../../../resources/MOT_dataset/2DMOT2015/train"
 videoName = "ADL-Rundle-8"
 
 gtPath = gtBasePath + "/" + videoName + "/gt/gt.txt"
-videoPath = "/home/benoit/Documents/Stage2A/resources/videos/MOT/" + videoName + ".mp4"
+videoPath = "../../../resources/videos/MOT/" + videoName + ".mp4"
 
 lineWidth = 2
 

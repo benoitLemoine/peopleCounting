@@ -3,10 +3,10 @@ import os
 from tracking.resultsExporter import ResultsExporter
 
 basePaths = [
-    "/home/benoit/Documents/Stage2A/resources/MOT_dataset/2DMOT2015/train",
-    "/home/benoit/Documents/Stage2A/resources/MOT_dataset/2DMOT2015/test"
+    "../../../resources/MOT_dataset/2DMOT2015/train",
+    "../../../resources/MOT_dataset/2DMOT2015/test"
 ]
-formatedGtFolderPath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/formatedGt/MOT"
+formatedGtFolderPath = "../../../resources/resultsTxt/formatedGt/MOT"
 
 for bp in basePaths:
     for file in os.listdir(bp):

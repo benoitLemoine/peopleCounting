@@ -3,10 +3,10 @@ from xml.dom import minidom
 
 from tracking.resultsExporter import ResultsExporter
 
-gtPaths = "/home/benoit/Documents/Stage2A/resources/CP_dataset/groundtruth"
-videoPaths = "/home/benoit/Documents/Stage2A/resources/CP_dataset/data"
+gtPaths = "../../../resources/CP_dataset/groundtruth"
+videoPaths = "../../../resources/CP_dataset/data"
 
-formatedGtFolderPath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/formatedGt/CP"
+formatedGtFolderPath = "../../../resources/resultsTxt/formatedGt/CP"
 
 for file in os.listdir(gtPaths):
     if file.endswith(".xml"):

@@ -1,8 +1,8 @@
 import os
 import cv2 as cv
 
-videoPath = "/home/benoit/Documents/Stage2A/resources/videos/MOT/Venice-2.mp4"
-gtFilePath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/formatedGt/MOT/Venice-2.txt"
+videoPath = "../../resources/videos/MOT/Venice-2.mp4"
+gtFilePath = "../../resources/resultsTxt/formatedGt/MOT/Venice-2.txt"
 
 if not os.path.exists(videoPath) or not os.path.exists(gtFilePath):
     print("These files don't exist :(")

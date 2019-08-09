@@ -2,7 +2,7 @@ import os
 import cv2 as cv
 
 
-folderPath = "/home/benoit/Documents/Stage2A/resources/MIVIA_dataset/Dataset People Counting MIVIA/DBc/VIDEOS/RGB"
+folderPath = "../../../resources/MIVIA_dataset/Dataset People Counting MIVIA/DBc/VIDEOS/RGB"
 resFile = open(folderPath + "/info.txt", "w+")
 
 for f in os.listdir(folderPath):

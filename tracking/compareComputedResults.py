@@ -1,8 +1,8 @@
 import os
 from tracking.resultsExporter import computeResultsScores, computeDeltaTimeWithOffset
 
-gtFolderPath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/formatedGt"
-resFolderPath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/results"
+gtFolderPath = "../../resources/resultsTxt/formatedGt"
+resFolderPath = "../../resources/resultsTxt/results"
 
 deltaTimeFunction = lambda resTime, gtTime: computeDeltaTimeWithOffset(resTime, gtTime, 1000)
 maxSpan = 1500

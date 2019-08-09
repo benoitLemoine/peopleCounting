@@ -2,8 +2,8 @@ import os
 import cv2 as cv
 from tracking.resultsExporter import ResultsExporter
 
-videoBasePath = "/home/benoit/Documents/Stage2A/resources/videos"
-resBasePath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/formatedGt"
+videoBasePath = "../../resources/videos"
+resBasePath = "../../resources/resultsTxt/formatedGt"
 
 files = [
     ("CP", "P2L_S3_C2.1"),

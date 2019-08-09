@@ -1,7 +1,7 @@
 import os
 import cv2 as cv
 
-folderPath = "/home/benoit/Documents/Stage2A/resources/CP_dataset/data"
+folderPath = "../../../resources/CP_dataset/data"
 
 folders = os.listdir(folderPath)
 

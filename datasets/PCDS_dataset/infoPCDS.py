@@ -2,10 +2,10 @@ import os
 import cv2 as cv
 
 folderPaths = [
-    "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/noisy/uncrowd",
-    "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/noisy/crowd",
-    "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/crowd",
-    "/home/benoit/Documents/Stage2A/resources/PCDS_dataset/25_20160407_back/normal/uncrowd"
+    "../../../resources/PCDS_dataset/25_20160407_back/noisy/uncrowd",
+    "../../../resources/PCDS_dataset/25_20160407_back/noisy/crowd",
+    "../../../resources/PCDS_dataset/25_20160407_back/normal/crowd",
+    "../../../resources/PCDS_dataset/25_20160407_back/normal/uncrowd"
 ]
 
 

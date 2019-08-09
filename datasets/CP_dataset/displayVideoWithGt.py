@@ -3,8 +3,9 @@ import cv2 as cv
 from xml.dom import minidom
 
 videoName = "P2L_S3_C1.2"
-gtBasePath = "/home/benoit/Documents/Stage2A/resources/CP_dataset/groundtruth"
-videoBasePath = "/home/benoit/Documents/Stage2A/resources/videos/CP"
+
+gtBasePath = "../../../resources/CP_dataset/groundtruth"
+videoBasePath = "../../../resources/videos/CP"
 
 size = 10
 

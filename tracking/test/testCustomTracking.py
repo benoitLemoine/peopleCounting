@@ -23,10 +23,10 @@ savingResults = False
 detectionTime = []
 trackingTime = []
 
-videoResBasePath = "/home/benoit/Documents/Stage2A/resources/resultsVideo/tracking"
-txtResBasePath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/results"
+videoResBasePath = "../../../resources/resultsVideo/tracking"
+txtResBasePath = "../../../resources/resultsTxt/results"
 videoPaths = [
-    "/home/benoit/Documents/Stage2A/resources/videos/CP/P1E_S1_C1.mp4"
+    "../../../resources/videos/CP/P1E_S1_C1.mp4"
 ]
 
 # Loading video

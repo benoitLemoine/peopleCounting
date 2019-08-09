@@ -13,8 +13,8 @@ from detection.tinyYolo.src.yolov3_tf2.models import YoloV3Tiny
 
 IMAGE_H, IMAGE_W = 416, 416
 
-weightsPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/detection/tinyYolo/src/checkpoints/yolov3-tiny.tf"
-classesPath = "/home/benoit/Documents/Stage2A/tensorflow-yolov3/detection/tinyYolo/src/data/coco.names"
+weightsPath = "./src/checkpoints/yolov3-tiny.tf"
+classesPath = "./src/data/coco.names"
 
 classNames = [c.strip() for c in open(classesPath).readlines()]
 

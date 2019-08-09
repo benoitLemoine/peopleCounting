@@ -3,8 +3,8 @@ from xml.dom import minidom
 
 from tracking.resultsExporter import ResultsExporter
 
-gtPaths = "/home/benoit/Documents/Stage2A/resources/MIVIA_dataset/Dataset People Counting MIVIA/DBc/GROUND TRUTH"
-videoPaths = "/home/benoit/Documents/Stage2A/resources/MIVIA_dataset/Dataset People Counting MIVIA/DBc/VIDEOS/RGB"
+gtPaths = "../../../resources/MIVIA_dataset/Dataset People Counting MIVIA/DBc/GROUND TRUTH"
+videoPaths = "../../../resources/MIVIA_dataset/Dataset People Counting MIVIA/DBc/VIDEOS/RGB"
 
 formatedGtFolderPath = "/home/benoit/Documents/Stage2A/resources/resultsTxt/formatedGt/MIVIA"
 

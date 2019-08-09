@@ -1,7 +1,7 @@
 import os
 import cv2 as cv
 
-root = "/home/benoit/Documents/Stage2A/resources/MOT_dataset/2DMOT2015"
+root = "../../../resources/MOT_dataset/2DMOT2015"
 
 resFile = open(root + "/info.txt", "w+")
 for folderPath in os.listdir(root):
